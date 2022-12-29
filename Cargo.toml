@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+image = "0.24"
+imageproc = "0.23"
 serenity = { git = "https://github.com/serenity-rs/serenity.git", rev = "ba3be69166f54c5986e4cc9438bc5bb4606fa4c2", default-features = false, features = ["builder", "cache", "client", "model", "utils", "gateway", "rustls_backend"] }
 tokio = { version = "1.22", features = ["rt-multi-thread"] }

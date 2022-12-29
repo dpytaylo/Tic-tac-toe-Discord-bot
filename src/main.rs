@@ -1,3 +1,4 @@
+mod game;
 mod ping;
 
 use serenity::all::Interaction;
@@ -6,7 +7,19 @@ use serenity::all::Ready;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::prelude::*;
 
-struct Handler;
+use game::Game;
+
+struct Handler {
+    game: Game,
+}
+
+impl Handler {
+    fn new() -> Self {
+        Self {
+            game: Game::new(),
+        }
+    }
+}
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -15,6 +28,7 @@ impl EventHandler for Handler {
             Interaction::Command(command) => {
                 match command.data.name.as_str() {
                     "ping" => ping::command(ctx, command).await,
+                    "play" => self.game.command(ctx, command).await,
                     _ => {
                         command.create_response(&ctx.http, CreateInteractionResponse::Message(
                             CreateInteractionResponseMessage::new()
@@ -27,7 +41,11 @@ impl EventHandler for Handler {
                 }               
             }
 
-            _ => (),
+            Interaction::Component(component) => {
+                self.game.component(ctx, component).await;
+            }
+
+            _ => (), // Now other variants are not important
         }
     }
 
@@ -43,6 +61,8 @@ impl EventHandler for Handler {
         // Command::create_global_application_command may take up
         // to an hour to be updated in the user slash commands list.
         guild_id.set_application_commands(&ctx.http, vec![
+            Game::register_play(),
+            Game::register_stop(),
             ping::register(), 
         ])
         .await
@@ -56,7 +76,7 @@ async fn main() {
         | GatewayIntents::MESSAGE_CONTENT;
 
     let mut client = Client::builder(include_str!("./../token.txt"), intents)
-        .event_handler(Handler)
+        .event_handler(Handler::new())
         .await
         .expect("Failed to create client!");
 
